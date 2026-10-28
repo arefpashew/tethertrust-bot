@@ -7,7 +7,7 @@ load_dotenv()
 
 
 BOT_TOKEN = os.getenv(
-    "BOT_TOKEN"
+    "8616982240:AAGVHsK0aUZ5g5Oyw5ODdyFr9UvfR4j32Do"
 )
 
 
