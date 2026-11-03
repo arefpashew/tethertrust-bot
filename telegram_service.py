@@ -1,60 +1,108 @@
-from telegram import Bot
-
-from config import (
-    BOT_TOKEN,
-    CHANNEL_ID
-)
-
-
-
+import os import logging
+from telegram import Bot from telegram.error import InvalidToken, TelegramError
+=========================
+Logging Configuration
+=========================
+logging.basicConfig( level=logging.INFO, format=”%(asctime)s - %(levelname)s - %(message)s” )
+logger = logging.getLogger(name)
+=========================
+Telegram Configuration
+=========================
+BOT_TOKEN = os.getenv(“BOT_TOKEN”, “”).strip()
+CHANNEL_ID = “@TetherTrust_Official”
+=========================
+Telegram Service
+=========================
 class TelegramService:
-    """
-    مدیریت ارسال پیام‌های TetherTrust به کانال
-    """
+def __init__(self):
 
-    def __init__(self):
+    if not BOT_TOKEN:
+        raise ValueError(
+            "BOT_TOKEN is missing! "
+            "Please configure BOT_TOKEN in Railway Variables."
+        )
+
+    if ":" not in BOT_TOKEN:
+        raise ValueError(
+            "BOT_TOKEN format is invalid. "
+            "Please check your BotFather token."
+        )
+
+    try:
 
         self.bot = Bot(
             token=BOT_TOKEN
         )
 
+        logger.info("Telegram Bot initialized successfully.")
 
+    except InvalidToken:
+        logger.error(
+            "Invalid Telegram BOT_TOKEN. "
+            "Check your Railway Variables."
+        )
+        raise
 
-    async def send_message(
-        self,
-        text
-    ):
-        """
-        ارسال پیام به کانال تلگرام
-        """
+# =========================
+# Send Message
+# =========================
 
-        try:
+async def send_message(self, text):
 
-            await self.bot.send_message(
+    if not text:
+        logger.warning("Empty Telegram message. Skipping.")
+        return False
 
-                chat_id=CHANNEL_ID,
+    try:
 
-                text=text
+        await self.bot.send_message(
+            chat_id=CHANNEL_ID,
+            text=str(text)
+        )
 
-            )
+        logger.info(
+            "Telegram message sent successfully."
+        )
 
+        return True
 
-            return True
+    except TelegramError as error:
 
+        logger.error(
+            "Telegram API Error: %s",
+            error
+        )
 
+        return False
 
-        except Exception as error:
+    except Exception:
 
+        logger.exception(
+            "Unexpected error while sending Telegram message."
+        )
 
-            print(
-                "Telegram Error:",
-                error
-            )
+        return False
 
+# =========================
+# Close Bot Session
+# =========================
 
-            return False
+async def close(self):
 
+    try:
 
+        await self.bot.shutdown()
 
+        logger.info(
+            "Telegram Bot session closed."
+        )
 
+    except Exception:
+
+        logger.exception(
+            "Error closing Telegram Bot session."
+        )
+=========================
+Global Instance
+=========================
 telegram_service = TelegramService()
